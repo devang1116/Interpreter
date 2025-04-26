@@ -1,11 +1,14 @@
 package lox;
 
 import java.util.*;
+import java.util.logging.Logger;
+
 import lox.TokenType.*;
 
 class Parser {
-    private static class ParserError extends RuntimeException {}
+    private static class ParserError extends RuntimeException { }
 
+    public static Logger logger = Logger.getLogger("Parser");
     private final List<Token> tokens;
     private int current = 0;
 
@@ -13,9 +16,10 @@ class Parser {
         this.tokens = tokens;
     }
 
-    // DECLARE: Intial point of Parsing
+    // IMPLEMENT: Parser Entry point
     Expr parse() {
         try {
+            logger.info("Inside Parser.");
             return expression();
         } catch (ParserError error) {
             return null;
@@ -35,7 +39,7 @@ class Parser {
         return expr;
     }
 
-    // DECLARE: Iterates over the tokens passed and checks if valid Token
+    // HELPER: Iterates over the tokens passed and checks if valid Token
     private boolean match(TokenType... types) {
         for(TokenType type: types) {
             if(check(type)) {
@@ -47,31 +51,31 @@ class Parser {
         return false;
     }
 
-    // DECLARE: Returns whether the current Token type matches or is included in the List of tokens
+    // HELPER: Returns whether the current Token type matches or is included in the List of tokens
     private boolean check(TokenType type) {
         if(isAtEnd())
             return false;
         return peek().type == type;
     }
 
-    // DECLARE: Advances the current pointer
+    // HELPER: Advances the current pointer
     private Token advance() {
         if(!isAtEnd())
             current++;
         return previous();
     }
 
-    // DECLARE: Returns if current index/token is the end of file
+    // HELPER: Returns if current index/token is the end of file
     private boolean isAtEnd() {
         return peek().type == TokenType.EOF;
     }
 
-    // DECLARE: Returns the current token
+    // HELPER: Returns the current token
     private Token peek() {
         return tokens.get(current);
     }
 
-    // DECLARE: Gets previous Token
+    // HELPER: Gets previous Token
     private Token previous() {
         return tokens.get(current - 1);
     }
@@ -147,7 +151,7 @@ class Parser {
         throw error(peek(), "Expect expression");
     }
 
-    // DECLARE: Ending a parenthesized expression
+    // HELPER: Ending a parenthesized expression
     private Token consume(TokenType type, String message) {
         if(check(type))
             return advance();
@@ -155,7 +159,7 @@ class Parser {
         throw error(peek(), message);
     }
 
-    // DECLARE: Error Handling method
+    // ERROR: Erro Handling method
     private ParserError error(Token token, String message) {
         Lox.error(token, message);
         return new ParserError();

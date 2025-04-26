@@ -10,7 +10,9 @@ import java.util.logging.Logger;
 
 public class Lox {
     public static boolean hadError = false;
+    public static boolean hadRuntimeError = false;
     public static Logger logger = Logger.getLogger("TopLevel");
+    public static final Interpreter interpreter = new Interpreter();
 
     public static void main(String[] args) throws IOException {
         logger.info("Inside Log Interpreter");
@@ -38,12 +40,14 @@ public class Lox {
         }
     }
 
+    // IMPLEMENT: Entry point
     private static void runFile(String path) throws IOException {
         logger.info("Inside runFile method.");
         byte[] bytes = Files.readAllBytes(Paths.get(path));
         run(new String(bytes, Charset.defaultCharset()));
     }
 
+    // IMPLEMENT: Entry point
     private static void run(String source) {
         logger.info("Inside run method.");
         Scanner scanner = new Scanner(source);
@@ -52,8 +56,11 @@ public class Lox {
         Expr expression = parser.parse();
 
         if (hadError)
-            return;
+            System.exit(65);
+        if (hadRuntimeError)
+            System.exit(70);
 
+        interpreter.interpret(expression);
         logger.info(new AstPrinter().print(expression));
     }
 
@@ -63,11 +70,19 @@ public class Lox {
         hadError = true;
     }
 
+    // ERROR: Handling
     static void error(Token token, String message) {
         if (token.type == TokenType.EOF) {
             report(token.line, " at end", message);
         } else {
             report(token.line, " at '" + token.lexeme + "'", message);
         }
+    }
+
+    // ERROR: Handling
+    static void runtimeError(RuntimeError error) {
+        System.err.println(error.getMessage() +
+                "\n[line " + error.token.line + "]");
+        hadRuntimeError = true;
     }
 }
