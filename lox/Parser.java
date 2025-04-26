@@ -13,7 +13,16 @@ class Parser {
         this.tokens = tokens;
     }
 
-    // Parser logic for an expression
+    // DECLARE: Intial point of Parsing
+    Expr parse() {
+        try {
+            return expression();
+        } catch (ParserError error) {
+            return null;
+        }
+    }
+
+    // DECLARE: Parser logic for an expression to be evaluated
     private Expr expression() {
         Expr expr = comparison();
 
@@ -40,8 +49,8 @@ class Parser {
 
     // DECLARE: Returns whether the current Token type matches or is included in the List of tokens
     private boolean check(TokenType type) {
-        if(!isAtEnd())
-            current++;
+        if(isAtEnd())
+            return false;
         return peek().type == type;
     }
 
@@ -150,6 +159,30 @@ class Parser {
     private ParserError error(Token token, String message) {
         Lox.error(token, message);
         return new ParserError();
+    }
+
+    // TODO: Higher logic to be implemented
+    private void synchronize() {
+        advance();
+
+        while(!isAtEnd()) {
+            if (previous().type == TokenType.SEMICOLON)
+                return;
+
+            switch (peek().type) {
+                case CLASS:
+                case FUN:
+                case VAR:
+                case FOR:
+                case IF:
+                case WHILE:
+                case PRINT:
+                case RETURN:
+                    return;
+            }
+
+            return;
+        }
     }
 
 }

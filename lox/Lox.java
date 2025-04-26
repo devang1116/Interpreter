@@ -48,10 +48,13 @@ public class Lox {
         logger.info("Inside run method.");
         Scanner scanner = new Scanner(source);
         List<Token> tokens = scanner.scanTokens();
+        Parser parser = new Parser(tokens);
+        Expr expression = parser.parse();
 
-        for (Token token : tokens) {
-            System.out.println(token);
-        }
+        if (hadError)
+            return;
+
+        logger.info(new AstPrinter().print(expression));
     }
 
     static private void report(int line, String where, String message) {
