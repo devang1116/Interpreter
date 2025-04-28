@@ -51,6 +51,11 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
     }
 
     @Override
+    public Object visitVariableExpr(Expr.Variable expr) {
+        return environment.get(expr.name);
+    }
+
+    @Override
     public Object visitAssignExpr(Expr.Assign expr) {
         Object value = evaluate(expr.value);
         environment.assign(expr.name, value);
@@ -100,11 +105,8 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
         return null;
     }
 
-    public Object visitVariableExpr(Expr.Variable expr) {
-        return environment.get(expr.name);
-    }
 
-    // HELPER:
+    // HELPER: Executes and evaluates statements
     private void execute(Stmt statement) {
         statement.accept(this);
     }
@@ -171,6 +173,7 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
         return null;
     }
 
+    // DECLARE: Executes statment considering the state
     void executeBlock(List<Stmt> statements, Environment environment) {
         Environment previous = this.environment;
 
@@ -197,6 +200,7 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
         return null;
     }
 
+    // HELPER: Checks if initializer statement and then uses environment to define variables
     public Void visitVarStmt(Stmt.Var stmt) {
         Object value = null;
         if (stmt.initializer != null)

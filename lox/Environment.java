@@ -18,6 +18,7 @@ public class Environment {
         values.put(name, value);
     }
 
+    // HELPER: Returns variables according to scope using enclosing and maps
     Object get(Token name) {
         if (values.containsKey(name.lexeme))
             return values.get(name.lexeme);
@@ -28,7 +29,7 @@ public class Environment {
         throw new RuntimeError(name, "Undefined Error'" + name.lexeme + "'.");
     }
 
-    // HELPER: Assigns variables
+    // HELPER: Assigns variables according to scope using enclosing
     void assign(Token name, Object value) {
         if (values.containsKey(name.lexeme)) {
             values.put(name.lexeme, value);
