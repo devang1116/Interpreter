@@ -2,18 +2,25 @@ package lox;
 
 import lox.TokenType.*;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
-class Interpreter implements Expr.Visitor<Object>{
+class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
 
+    private Environment environment = new Environment();
     public static Logger logger = Logger.getLogger("Interpreter");
+    private final Map<Expr, Integer> locals = new HashMap<>();
 
     // IMPLEMENT: Interpreter entry point
-    void interpret(Expr expression) {
+    void interpret(List<Stmt> statements) {
         try {
             logger.info("Inside Interpreter.");
-            Object value = evaluate(expression);
-            logger.info(stringify(value));
+
+            for (Stmt statement: statements)
+                execute(statement);
+
         } catch (RuntimeError error) {
             Lox.runtimeError(error);
         }
@@ -41,6 +48,13 @@ class Interpreter implements Expr.Visitor<Object>{
         }
 
         return null;
+    }
+
+    @Override
+    public Object visitAssignExpr(Expr.Assign expr) {
+        Object value = evaluate(expr.value);
+        environment.assign(expr.name, value);
+        return value;
     }
 
     @Override
@@ -84,6 +98,15 @@ class Interpreter implements Expr.Visitor<Object>{
         }
 
         return null;
+    }
+
+    public Object visitVariableExpr(Expr.Variable expr) {
+        return environment.get(expr.name);
+    }
+
+    // HELPER:
+    private void execute(Stmt statement) {
+        statement.accept(this);
     }
 
     // HELPER: Stringifies the object to present to the user
@@ -140,5 +163,46 @@ class Interpreter implements Expr.Visitor<Object>{
     // HELPER: Call to Visitor's implementation to evaluate
     private Object evaluate(Expr expr) {
         return expr.accept(this);
+    }
+
+    @Override
+    public Void visitBlockStmt(Stmt.Block stmt) {
+        executeBlock(stmt.statements, new Environment(environment));
+        return null;
+    }
+
+    void executeBlock(List<Stmt> statements, Environment environment) {
+        Environment previous = this.environment;
+
+        try {
+            this.environment = environment;
+            for (Stmt statement: statements)
+                execute(statement);
+        } finally {
+            this.environment = previous;
+        }
+    }
+
+    @Override
+    public Void visitExpressionStmt(Stmt.Expression stmt) {
+        evaluate(stmt.expression);
+        return null;
+    }
+
+    @Override
+    public Void visitPrintStmt(Stmt.Print stmt) {
+        Object object = stmt.expression;
+        Object obj = evaluate(stmt.expression);
+        logger.info("Statement : " + stringify(obj));
+        return null;
+    }
+
+    public Void visitVarStmt(Stmt.Var stmt) {
+        Object value = null;
+        if (stmt.initializer != null)
+            value = evaluate(stmt.initializer);
+
+        environment.define(stmt.name.lexeme, value);
+        return null;
     }
 }

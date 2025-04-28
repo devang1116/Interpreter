@@ -11,11 +11,11 @@ import java.util.logging.Logger;
 public class Lox {
     public static boolean hadError = false;
     public static boolean hadRuntimeError = false;
-    public static Logger logger = Logger.getLogger("TopLevel");
+    public static Logger logger = Logger.getLogger("Base");
     public static final Interpreter interpreter = new Interpreter();
 
     public static void main(String[] args) throws IOException {
-        logger.info("Inside Log Interpreter");
+        logger.info("Inside Base Level");
         if (args.length > 1) {
             System.out.println("Usage lox [script]");
             System.exit(64);
@@ -53,15 +53,15 @@ public class Lox {
         Scanner scanner = new Scanner(source);
         List<Token> tokens = scanner.scanTokens();
         Parser parser = new Parser(tokens);
-        Expr expression = parser.parse();
+        List<Stmt> statements = parser.parse();
 
         if (hadError)
             System.exit(65);
         if (hadRuntimeError)
             System.exit(70);
 
-        interpreter.interpret(expression);
-        logger.info(new AstPrinter().print(expression));
+        interpreter.interpret(statements);
+//        logger.info(new AstPrinter().print(statements));
     }
 
     static private void report(int line, String where, String message) {

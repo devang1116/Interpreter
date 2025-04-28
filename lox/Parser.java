@@ -17,23 +17,100 @@ class Parser {
     }
 
     // IMPLEMENT: Parser Entry point
-    Expr parse() {
+    List<Stmt> parse() {
         try {
             logger.info("Inside Parser.");
-            return expression();
+            List<Stmt> statements = new ArrayList<>();
+            while(!isAtEnd())
+                statements.add(declaration());
+
+            return statements;
         } catch (ParserError error) {
             return null;
         }
     }
 
+    // HELPER: Handles variable declartion or returns the expr statement
+    private Stmt declaration() {
+        try {
+            if(match(TokenType.VAR))
+                return varDeclaration();
+
+            return statement();
+
+        } catch (ParserError e) {
+            synchronize();
+            return null;
+        }
+    }
+
+    // HELPER: Handles variable declaration parsing
+    private Stmt varDeclaration() {
+        Token name = consume(TokenType.IDENTIFIER, "Expect variable name.");
+        Expr initializer = null;
+
+        if (match(TokenType.EQUAL))
+            initializer = expression();
+
+        consume(TokenType.SEMICOLON, "Expect ';' after variable declaration");
+        return new Stmt.Var(name, initializer);
+    }
+
+    // HELPER: Returns and matches statement conditions
+    private Stmt statement() {
+        if (match(TokenType.PRINT))
+            return printStatement();
+        if (match(TokenType.LEFT_BRACE))
+            return new Stmt.Block(block());
+
+        return expressionStatement();
+    }
+
+    // HELPER:
+    private List<Stmt> block() {
+        List<Stmt> statements = new ArrayList<>();
+
+        while(!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
+            statements.add(declaration());
+        }
+
+        consume(TokenType.RIGHT_BRACE, "Expect '}' afte block");
+        return statements;
+    }
+
+    // HELPER: Prints statement and returns it too
+    private Stmt printStatement() {
+        Expr expr = expression();
+        consume(TokenType.SEMICOLON, "Expect ';' after value");
+        return new Stmt.Print(expr);
+    }
+
+    // HELPER: Reads and returns the expression statement
+    private Stmt expressionStatement() {
+        Expr expr =  expression();
+        consume(TokenType.SEMICOLON, "Expect ';' after value");
+        return new Stmt.Expression(expr);
+    }
+
     // DECLARE: Parser logic for an expression to be evaluated
     private Expr expression() {
-        Expr expr = comparison();
+        return assignment();
+    }
 
-        while(match(TokenType.BANG_EQUAL, TokenType.EQUAL_EQUAL))  {
-            Token operator = previous();
-            Expr right = comparison();
-            expr = new Expr.Binary(expr, operator, right);
+    // HELPER: Evaluates the assignment operator to fetch and set variable declaration
+    private Expr assignment() {
+        Expr expr = equality();
+
+        if (match(TokenType.EQUAL)) {
+            Token equals = previous();
+            Expr value = assignment();
+
+            if (expr instanceof Expr.Variable) {
+                Token name = ((Expr.Variable) expr).name;
+                return new Expr.Assign(name, value);
+            }
+
+            error(equals, "Invalid assignment target.");
         }
 
         return expr;
@@ -80,7 +157,20 @@ class Parser {
         return tokens.get(current - 1);
     }
 
-    // DECLARE: Performs comparsion parsing
+    // DECLARE: Controls flow if statement is not variable declaration
+    private Expr equality() {
+        Expr expr = comparison();
+
+        while(match(TokenType.BANG_EQUAL, TokenType.EQUAL_EQUAL))  {
+            Token operator = previous();
+            Expr right = comparison();
+            expr = new Expr.Binary(expr, operator, right);
+        }
+
+        return expr;
+    }
+
+    // DECLARE: Controls flow if expr is not equality
     private Expr comparison() {
         Expr expr = term();
 
@@ -93,7 +183,7 @@ class Parser {
         return expr;
     }
 
-    // DECLARE: Returns and processes Addition and Subtraction Expr precedence
+    // DECLARE: Controls flow if expr is not comparison
     private Expr term() {
         Expr expr = factor();
 
@@ -106,7 +196,7 @@ class Parser {
         return expr;
     }
 
-    // DECLARE: Returns and processes Multiplication and Division Expr precedence
+    // DECLARE: Controls flow if expr is not add minus ops
     private Expr factor() {
         Expr expr = unary();
 
@@ -119,7 +209,7 @@ class Parser {
         return expr;
     }
 
-    // DECLARE: Returns an unary expression
+    // DECLARE: Controls flow if expr is not multiply divide ops
     private Expr unary() {
         if(match(TokenType.BANG, TokenType.MINUS)) {
             Token operator = previous();
@@ -141,6 +231,9 @@ class Parser {
 
         if(match(TokenType.NUMBER, TokenType.STRING))
             return new Expr.Literal(previous().literal);
+
+        if (match(TokenType.IDENTIFIER))
+            return new Expr.Variable(previous());
 
         if(match(TokenType.LEFT_PAREN)) {
             Expr expr = expression();
