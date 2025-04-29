@@ -8,7 +8,7 @@ class AstPrinter implements Expr.Visitor<String>{
     //TODO: Implement
     @Override
     public String visitAssignExpr(Expr.Assign expr) {
-        return parenthesize(expr.name.lexeme, expr);
+        return parenthesize(expr.name.lexeme, expr.value);
     }
 
     // Call / Handle Literals
@@ -29,7 +29,7 @@ class AstPrinter implements Expr.Visitor<String>{
     //TODO: Implement
     @Override
     public String visitVariableExpr(Expr.Variable expr) {
-        return parenthesize(expr.name.lexeme, expr);
+        return expr.name.lexeme;
     }
 
     // Call / Handle Literals
@@ -37,6 +37,11 @@ class AstPrinter implements Expr.Visitor<String>{
         if(expr.value == null)
             return "nil";
         return expr.value.toString();
+    }
+
+    @Override
+    public String visitLogicalExpr(Expr.Logical expr) {
+        return parenthesize(expr.operator.lexeme, expr.left, expr.right);
     }
 
     // Format the expr and present it parenthesized

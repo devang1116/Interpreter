@@ -19,12 +19,12 @@ public class Environment {
     }
 
     // HELPER: Returns variables according to scope using enclosing and maps
-    Object get(Token name) {
-        if (values.containsKey(name.lexeme))
-            return values.get(name.lexeme);
+    Object get(Token name, Environment environment) {
+        if (environment.values.containsKey(name.lexeme))
+            return environment.values.get(name.lexeme);
 
         if (enclosing != null)
-            return enclosing.get(name);
+            return enclosing.get(name, enclosing);
 
         throw new RuntimeError(name, "Undefined Error'" + name.lexeme + "'.");
     }
@@ -36,8 +36,10 @@ public class Environment {
             return;
         }
 
-        if (enclosing != null)
+        if (enclosing != null) {
             enclosing.assign(name, value);
+            return;
+        }
 
         throw new RuntimeError(name, "Undefined variable '" + name.lexeme +"'.");
     }

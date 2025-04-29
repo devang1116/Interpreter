@@ -15,7 +15,8 @@ abstract class Stmt {
 
         //    R visitReturnStmt(Return stmt);
         R visitVarStmt(Var stmt);
-//    R visitWhileStmt(While stmt);
+
+        R visitWhileStmt(While stmt);
     }
 
     static class Block extends Stmt {
@@ -113,20 +114,20 @@ abstract class Stmt {
         final Token name;
         final Expr initializer;
     }
-//
-//  static class While extends Stmt {
-//    While(Expr condition, Stmt body) {
-//      this.condition = condition;
-//      this.body = body;
-//    }
-//
-//    <R> R accept(Visitor<R> visitor) {
-//      return visitor.visitWhileStmt(this);
-//    }
-//
-//    final Expr condition;
-//    final Stmt body;
-//  }
+
+    static class While extends Stmt {
+        While(Expr condition, Stmt body) {
+            this.condition = condition;
+            this.body = body;
+        }
+
+        <R> R accept(Visitor<R> visitor) {
+            return visitor.visitWhileStmt(this);
+        }
+
+        final Expr condition;
+        final Stmt body;
+    }
 
     abstract <R> R accept(Visitor<R> visitor);
 }
