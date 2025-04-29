@@ -64,6 +64,7 @@ public class Lox {
 //        logger.info(new AstPrinter().print(statements));
     }
 
+    // ERROR: Prints the location for the error
     static private void report(int line, String where, String message) {
         System.err.println(
                 "[line " + line + "] Error" + where + ": " + message);

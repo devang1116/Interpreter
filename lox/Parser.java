@@ -58,12 +58,29 @@ class Parser {
 
     // HELPER: Returns and matches statement conditions
     private Stmt statement() {
+        if(match(TokenType.IF))
+            return ifStatement();
         if (match(TokenType.PRINT))
             return printStatement();
         if (match(TokenType.LEFT_BRACE))
             return new Stmt.Block(block());
 
         return expressionStatement();
+    }
+
+    // HELPER: TODO:
+    private Stmt ifStatement() {
+        consume(TokenType.LEFT_PAREN, "Expect '(' after this.");
+        Expr condition = expression();
+        consume(TokenType.RIGHT_PAREN, "Expect ')' after if condition.");
+
+        Stmt thenBranch = statement();
+        Stmt elseBranch = null;
+
+        if (match(TokenType.ELSE))
+            elseBranch = statement();
+
+        return new Stmt.If(condition, thenBranch, elseBranch);
     }
 
     // HELPER: TODO:
@@ -74,7 +91,7 @@ class Parser {
             statements.add(declaration());
         }
 
-        consume(TokenType.RIGHT_BRACE, "Expect '}' afte block");
+        consume(TokenType.RIGHT_BRACE, "Expect '}' after block");
         return statements;
     }
 
