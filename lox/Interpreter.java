@@ -1,6 +1,7 @@
 package lox;
 
 import lox.TokenType.*;
+import lox.Expr.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -125,10 +126,10 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
                 checkNumberOperands(expr.operator, left, right);
                 return (double) left * (double) right;
             case PLUS:
-                if (left instanceof Double && right instanceof Double)
-                    return (double) left + (double) right;
-                if (left instanceof String && right instanceof String)
-                    return (String) left + (String) right;
+                if (((Expr.Literal) left).value instanceof Double && ((Expr.Literal) right).value instanceof Double)
+                    return ((((double) ((Expr.Literal) left).value)) + ((double) ((Expr.Literal) right).value));
+                if (((Expr.Literal) left).value instanceof String && ((Expr.Literal) right).value instanceof String)
+                    return ((((String) ((Expr.Literal) left).value)) + ((String) ((Expr.Literal) right).value));
 
                 throw new RuntimeError(expr.operator, "Operands must be of the same type.");
             case BANG_EQUAL:
@@ -177,6 +178,13 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
                 text = text.substring(0, text.length() - 2);
 
             return text;
+        }
+        if(object instanceof String) {
+            return object.toString();
+        }
+
+        if (object instanceof Object) {
+            return (((Expr.Literal) object).value).toString();
         }
 
         return object.toString();
@@ -283,7 +291,7 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
         throw new Return(value);
     }
 
-    // HELPER:
+    // HELPER: Helps with throwing Exception when return is called wrongly
     class Return extends RuntimeException {
         final Object value;
 

@@ -46,7 +46,7 @@ class Parser {
         }
     }
 
-    // DECLARE:
+    // DECLARE: Handles logic and returns function Statement
     private Stmt.Function function(String kind) {
         Token name = consume(TokenType.IDENTIFIER, "Expect " + kind + "name.");
         consume(TokenType.LEFT_PAREN, "Expect '(' after " + kind + " name.");
@@ -57,7 +57,7 @@ class Parser {
                 if (parameters.size() > 255)
                     error(peek(), "Cant have more than 255 parameters.");
                 parameters.add(consume(TokenType.IDENTIFIER, "Expect parameter name."));
-            } while(check(TokenType.COMMA));
+            } while(match(TokenType.COMMA));
         }
         consume(TokenType.RIGHT_PAREN, "Expect ')' after parameters.");
 
@@ -96,7 +96,7 @@ class Parser {
         return expressionStatement();
     }
 
-    // HELPER:
+    // HELPER: Handles logic to process Return statements
     private Stmt returnStatement() {
         Token keyword = previous();
         Expr value = null;
@@ -221,7 +221,7 @@ class Parser {
         return expr;
     }
 
-    // HELPER: TODO
+    // HELPER: Handles logic if logical OR encountered or else passes for other parsing
     private Expr or() {
         Expr expr = and();
 
@@ -234,6 +234,7 @@ class Parser {
         return expr;
     }
 
+    // HELPER: Handles logic if logical AND encountered or else passes for other parsing
     private Expr and() {
         Expr expr = equality();
 
@@ -418,7 +419,7 @@ class Parser {
         return new ParserError();
     }
 
-    // TODO: Higher logic to be implemented
+    // DECLARE: Handles logic
     private void synchronize() {
         advance();
 

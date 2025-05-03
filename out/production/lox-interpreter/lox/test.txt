@@ -1,12 +1,6 @@
+fun ab(aa,bb) {
+    print(aa + bb);
 
-
-fun ab() {
-    print("abc");
-    fun bc() {
-        print("bcd");
-    }
-    bc();
 }
 
-print("abc");
-ab();
+ab("land","fdsfsd");
