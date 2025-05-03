@@ -2,6 +2,7 @@ package lox;
 
 import lox.TokenType.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,8 +11,28 @@ import java.util.logging.Logger;
 class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
 
     private Environment environment = new Environment();
+    final Environment globals = new Environment();
     public static Logger logger = Logger.getLogger("Interpreter");
     private final Map<Expr, Integer> locals = new HashMap<>();
+
+    Interpreter() {
+        globals.define("clock", new Callable() {
+            @Override
+            public Object call(Interpreter interpreter, List<Object> arguments) {
+                return (double) System.currentTimeMillis();
+            }
+
+            @Override
+            public int arity() {
+                return 0;
+            }
+
+            @Override
+            public String toString() {
+                return "<native fn>";
+            }
+        });
+    }
 
     // IMPLEMENT: Interpreter entry point
     void interpret(List<Stmt> statements) {
@@ -119,6 +140,26 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
         return null;
     }
 
+    @Override
+    public Object visitCallExpr(Expr.Call expr) {
+        Object callee = evaluate(expr.callee);
+
+        List<Object> arguments = new ArrayList<>();
+        for (Expr argument: expr.arguments) {
+            arguments.add(argument);
+        }
+
+        if(!(callee instanceof Callable)) {
+            return new RuntimeError(expr.paren, "Can only run functions and classes.");
+        }
+
+        Callable function = (Callable) callee;
+        if(arguments.size() != function.arity()) {
+            return new RuntimeError(expr.paren, "Expected function arguments : "+ function.arity() +" but received " + expr.arguments);
+        }
+        return function.call(this, arguments);
+    }
+
 
     // HELPER: Executes and evaluates statements
     private void execute(Stmt statement) {
@@ -207,6 +248,13 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
     }
 
     @Override
+    public Void visitFunctionStmt(Stmt.Function stmt) {
+        Function function = new Function(stmt, environment);
+        environment.define(stmt.name.lexeme, function);
+        return null;
+    }
+
+    @Override
     public Void visitIfStmt(Stmt.If stmt) {
         Object object = evaluate(stmt.condition);
 
@@ -224,6 +272,25 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
         Object obj = evaluate(stmt.expression);
         logger.info("Statement : " + stringify(obj));
         return null;
+    }
+
+    @Override
+    public Void visitReturnStmt(Stmt.Return stmt) {
+        Object value = null;
+        if (stmt.value != null)
+            value = evaluate(stmt.value);
+
+        throw new Return(value);
+    }
+
+    // HELPER:
+    class Return extends RuntimeException {
+        final Object value;
+
+        Return(Object value) {
+            super(null, null, false, false);
+            this.value = value;
+        }
     }
 
     // HELPER: Checks if initializer statement and then uses environment to define variables

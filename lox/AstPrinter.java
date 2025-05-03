@@ -16,6 +16,11 @@ class AstPrinter implements Expr.Visitor<String>{
         return parenthesize(expr.operator.lexeme, expr.left, expr.right);
     }
 
+    @Override
+    public String visitCallExpr(Expr.Call expr) {
+        return parenthesize("function", expr.callee);
+    }
+
     // Call / Handle Literals
     public String visitGroupingExpr(Expr.Grouping expr) {
         return parenthesize("group", expr.expression);
@@ -55,15 +60,5 @@ class AstPrinter implements Expr.Visitor<String>{
         }
         builder.append(")");
         return builder.toString();
-    }
-
-    public static void main(String[] args) {
-//        Expr expr = new Expr.Binary(new Expr.Unary( new Token(TokenType.MINUS, "-", null, 1),
-//                                                    new Expr.Literal(123)),
-//                                    new Token(TokenType.STAR, "*", null, 1),
-//                                    new Expr.Grouping(new Expr.Literal(45.56)));
-//
-//
-//        System.out.println(new AstPrinter().print(expr));
     }
 }
