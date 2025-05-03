@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/lox-interpreter.iml" filepath="$PROJECT_DIR$/lox-interpreter.iml" />
+      <module fileurl="file://$PROJECT_DIR$/dev-interpreter.iml" filepath="$PROJECT_DIR$/dev-interpreter.iml" />
     </modules>
   </component>
 </project>
