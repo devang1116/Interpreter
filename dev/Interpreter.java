@@ -3,6 +3,7 @@ package dev;
 import dev.TokenType.*;
 import dev.Expr.*;
 
+import javax.swing.text.html.parser.AttributeList;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -11,13 +12,13 @@ import java.util.logging.Logger;
 
 class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
 
-    private Environment environment = new Environment();
-    final Environment globals = new Environment();
+    private Environment environment;
+    final Map<String, Object> globals = new HashMap<>();
     public static Logger logger = Logger.getLogger("Interpreter");
     private final Map<Expr, Integer> locals = new HashMap<>();
 
     Interpreter() {
-        globals.define("clock", new Callable() {
+        globals.put("clock", new Callable() {
             @Override
             public Object call(Interpreter interpreter, List<Object> arguments) {
                 return (double) System.currentTimeMillis();
@@ -88,13 +89,29 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
 
     @Override
     public Object visitVariableExpr(Expr.Variable expr) {
-        return environment.get(expr.name , environment);
+        return lookUpVariable(expr.name, expr);
+    }
+
+    // HELPER: Resolves the inner scope variables
+    public Object lookUpVariable(Token name, Expr expr) {
+        Integer distance = locals.get(expr);
+        if (distance != null)
+            return environment.getAt(distance, name.lexeme);
+        else
+            return globals.get(name.lexeme);
     }
 
     @Override
     public Object visitAssignExpr(Expr.Assign expr) {
         Object value = evaluate(expr.value);
-        environment.assign(expr.name, value);
+
+        logger.info("It is entering Assign Expr");
+
+        Integer distance = locals.get(expr);
+        if(distance != null)
+            environment.assignAt(distance, expr.name, value);
+        else
+            globals.put(expr.name.lexeme, value);
         return value;
     }
 
@@ -165,6 +182,10 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
     // HELPER: Executes and evaluates statements
     private void execute(Stmt statement) {
         statement.accept(this);
+    }
+
+    void resolve(Expr expr, int depth) {
+        locals.put(expr, depth);
     }
 
     // HELPER: Stringifies the object to present to the user
@@ -258,7 +279,7 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
     @Override
     public Void visitFunctionStmt(Stmt.Function stmt) {
         Function function = new Function(stmt, environment);
-        environment.define(stmt.name.lexeme, function);
+        define(stmt.name, function);
         return null;
     }
 
@@ -307,9 +328,18 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
         if (stmt.initializer != null)
             value = evaluate(stmt.initializer);
 
-        environment.define(stmt.name.lexeme, value);
+        define(stmt.name , value);
         return null;
     }
+
+    // HELPER: Defines the variable at appropriate scope
+    private void define(Token name, Object value) {
+        if (environment != null)
+            environment.define(name.lexeme , value);
+        else
+            globals.put(name.lexeme, value);
+    }
+
 
     @Override
     public Void visitWhileStmt(Stmt.While stmt) {

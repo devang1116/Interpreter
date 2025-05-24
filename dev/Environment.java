@@ -43,4 +43,24 @@ public class Environment {
 
         throw new RuntimeError(name, "Undefined variable '" + name.lexeme +"'.");
     }
+
+    // HELPER: Resolves the enclosing and gets the value from the particular scope
+    Object getAt(int distance, String name ) {
+        return ancestor(distance).values.get(name);
+    }
+
+    // HELPER: Resolve the scope/enclsing and assign value to it
+    void assignAt(int distance, Token name, Object value) {
+        ancestor(distance).values.put(name.lexeme, value) ;
+    }
+
+    // HELPER: Fetches the right enclosing/scope according to the distance
+    Environment ancestor(int distance) {
+        Environment environment = this;
+        for (int i = 0; i < distance; i++) {
+            environment = environment.enclosing;
+        }
+
+        return environment;
+    }
 }

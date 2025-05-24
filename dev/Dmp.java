@@ -13,6 +13,7 @@ public class Dmp {
     public static boolean hadRuntimeError = false;
     public static Logger logger = Logger.getLogger("Base");
     public static final Interpreter interpreter = new Interpreter();
+    public static final Resolver resolver = new Resolver(interpreter);
 
     public static void main(String[] args) throws IOException {
         logger.info("Inside Base Level");
@@ -59,6 +60,8 @@ public class Dmp {
             System.exit(65);
         if (hadRuntimeError)
             System.exit(70);
+
+        resolver.resolve(statements);
 
         interpreter.interpret(statements);
 //        logger.info(new AstPrinter().print(statements));

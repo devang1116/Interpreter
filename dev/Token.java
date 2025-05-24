@@ -1,6 +1,7 @@
 package dev;
 
 class Token {
+    // Type of
     final TokenType type;
     final String lexeme;
     final Object literal;

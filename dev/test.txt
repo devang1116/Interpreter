@@ -1,6 +1,10 @@
-fun ab(aa,bb) {
-    print(aa + bb);
+var a = "global";
+{
+  fun showA() {
+    print a;
+  }
 
+  showA();
+  var a = "block";
+  showA();
 }
-
-ab("land","fdsfsd");

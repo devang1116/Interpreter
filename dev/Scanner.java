@@ -127,6 +127,7 @@ class Scanner {
         }
     }
 
+    // HELPER: Checks whether the current charecter could be a identifier or a reserved word
     private void identifier() {
         while (isAlphaNumeric(peek()))
             advance();
@@ -139,16 +140,17 @@ class Scanner {
         addToken(type);
     }
 
+    // HELPER: Checks whether the current char is number or alphabet
     private boolean isAlphaNumeric(char c) {
         return isAlpha(c) || isDigit(c);
     }
 
-    // Returns whether the current charecter is an alphabet
+    // HELPER: Returns whether the current charecter is an alphabet
     private boolean isAlpha(char c) {
         return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
     }
 
-    // Returns or Scans number
+    // HELPER: Checks whether we have encountered a number
     private void number(char c) {
         while (isDigit(peek()))
             advance();
@@ -162,18 +164,19 @@ class Scanner {
         addToken(TokenType.NUMBER, Double.parseDouble(source.substring(start, current)));
     }
 
-    // Returns te next charecter if available
+    // HELPER: Returns te next charecter if available
     private char peekNext() {
         if(current + 1 >= source.length())
             return '\0';
         return source.charAt(current + 1);
     }
 
-    // Checks if the charecter is and digit
+    // HELPER: Checks if the charecter is and digit
     private boolean isDigit(char c) {
         return c >= '0' && c <= '9';
     }
 
+    // HELPER: Generates string token whenever a string is encountered
     private void string() {
         while (peek() != '"' && !isAtEnd()) {
             if (peek() == '\n')
@@ -192,13 +195,14 @@ class Scanner {
         addToken(TokenType.STRING, value);
     }
 
-    // Method to peek or access a particular index in the source string without changing the index
+    // HELPER: Method to access a particular char at an index in the source string without changing the index
     private char peek() {
         if (isAtEnd())
             return '\0';
         return source.charAt(current);
     }
 
+    // HELPER: Method to check if current charecter and passed argument is same
     private boolean match(char expected) {
         if (isAtEnd())
             return false;
@@ -210,16 +214,18 @@ class Scanner {
     }
 
 
+    // HELPER: Passes it to the next addToken overloaded method
     private void addToken(TokenType type) {
         addToken(type, null);
     }
 
+    // HELPER: Scans the current token and adds it to the list
     private void addToken(TokenType type, Object literal) {
         String text = source.substring(start, current);
         tokens.add(new Token(type, text, literal, line));
     }
 
-    // Method to increment the index of source string
+    // HELPER: Method to get the current token and move ahead
     private char advance() {
         return source.charAt(current++);
     }

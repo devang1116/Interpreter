@@ -30,7 +30,7 @@ class Parser {
         }
     }
 
-    // HELPER: Handles variable declartion or returns the expr statement
+    // HELPER: Handles declaration of statements variables functions and more
     private Stmt declaration() {
         try {
             if(match(TokenType.FUN))
@@ -405,7 +405,7 @@ class Parser {
         throw error(peek(), "Expect expression");
     }
 
-    // HELPER: Ending a parenthesized expression
+    // HELPER: Checks whether passed token type matches with the current token in iteration and increments the token counter
     private Token consume(TokenType type, String message) {
         if(check(type))
             return advance();
