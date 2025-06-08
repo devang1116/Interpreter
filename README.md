@@ -31,7 +31,7 @@ git clone https://github.com/devang1116/Interpreter.git
 cd java-interpreter
 ```
 
-2.
+2. **Compile and Run:**
 ```bash
 javac -d out src/com/example/interpreter/*.java
 java -cp out com.example.interpreter.Main
