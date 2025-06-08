@@ -1,4 +1,4 @@
-# Java Interpreter Project
+# Interpreter DMP 
 
 A lightweight interpreter for a custom dynamically-typed programming language. This project is built entirely in Java and supports expression evaluation, variable scopes, functions, and object-oriented constructs like classes and methods.
 
@@ -27,5 +27,11 @@ A lightweight interpreter for a custom dynamically-typed programming language. T
 1. **Clone the repository:**
 
 ```bash
-git clone https://github.com/yourusername/java-interpreter.git
+git clone https://github.com/devang1116/Interpreter.git
 cd java-interpreter
+```
+
+2.
+```bash
+javac -d out src/com/example/interpreter/*.java
+java -cp out com.example.interpreter.Main
