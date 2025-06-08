@@ -32,7 +32,8 @@ public class GenerateAst {
                 "Print      : Expr expression",
                 "Return     : Token keyword, Expr value",
                 "Var        : Token name, Expr initializer",
-                "While      : Expr condition, Stmt body"
+                "While      : Expr condition, Stmt body",
+                "Class      : Token name, List<Stmt.Function> methods"
         ));
     }
     private static void defineAst(

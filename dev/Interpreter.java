@@ -3,7 +3,6 @@ package dev;
 import dev.TokenType.*;
 import dev.Expr.*;
 
-import javax.swing.text.html.parser.AttributeList;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -12,13 +11,13 @@ import java.util.logging.Logger;
 
 class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
 
-    private Environment environment;
-    final Map<String, Object> globals = new HashMap<>();
+    private Environment globals = new Environment();
+    private Environment environment = globals;
     public static Logger logger = Logger.getLogger("Interpreter");
     private final Map<Expr, Integer> locals = new HashMap<>();
 
     Interpreter() {
-        globals.put("clock", new Callable() {
+        globals.define("clock", new Callable() {
             @Override
             public Object call(Interpreter interpreter, List<Object> arguments) {
                 return (double) System.currentTimeMillis();
@@ -92,13 +91,38 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
         return lookUpVariable(expr.name, expr);
     }
 
+    @Override
+    public Object visitGetExpr(Expr.Get expr) {
+        Object object = evaluate(expr.object);
+        if (object instanceof Instance)
+            return ((Instance) object).get(expr.name);
+
+        throw new RuntimeError(expr.name, "Only instances have properties.");
+    }
+
+    @Override
+    public Object visitSetExpr(Expr.Set expr) {
+        Object object = evaluate(expr.object);
+        if (object instanceof Instance) {
+            Object value = evaluate(expr.value);
+            ((Instance) object).set(expr.name, value);
+        }
+
+        return new RuntimeError(expr.name, "Only instances have fields");
+    }
+
+    @Override
+    public Object visitThisExpr(This expr) {
+        return lookUpVariable(expr.keyword, expr);
+    }
+
     // HELPER: Resolves the inner scope variables
     public Object lookUpVariable(Token name, Expr expr) {
         Integer distance = locals.get(expr);
         if (distance != null)
             return environment.getAt(distance, name.lexeme);
         else
-            return globals.get(name.lexeme);
+            return globals.get(name);
     }
 
     @Override
@@ -111,7 +135,7 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
         if(distance != null)
             environment.assignAt(distance, expr.name, value);
         else
-            globals.put(expr.name.lexeme, value);
+            globals.assign(expr.name, value);
         return value;
     }
 
@@ -143,10 +167,10 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
                 checkNumberOperands(expr.operator, left, right);
                 return (double) left * (double) right;
             case PLUS:
-                if (((Expr.Literal) left).value instanceof Double && ((Expr.Literal) right).value instanceof Double)
-                    return ((((double) ((Expr.Literal) left).value)) + ((double) ((Expr.Literal) right).value));
-                if (((Expr.Literal) left).value instanceof String && ((Expr.Literal) right).value instanceof String)
-                    return ((((String) ((Expr.Literal) left).value)) + ((String) ((Expr.Literal) right).value));
+                if (left instanceof Double && right instanceof Double)
+                    return (Double)left + (Double) right;
+                if (left instanceof String && right instanceof String)
+                    return (String) left + (String) right;
 
                 throw new RuntimeError(expr.operator, "Operands must be of the same type.");
             case BANG_EQUAL:
@@ -204,9 +228,19 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
             return object.toString();
         }
 
+        if(object instanceof Instance) {
+            return ((Instance) object).toString();
+        }
+
+        if (object instanceof Function) {
+            return object.toString();
+        }
+
         if (object instanceof Object) {
             return (((Expr.Literal) object).value).toString();
         }
+
+
 
         return object.toString();
     }
@@ -278,7 +312,7 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
 
     @Override
     public Void visitFunctionStmt(Stmt.Function stmt) {
-        Function function = new Function(stmt, environment);
+        Function function = new Function(stmt, environment, false);
         define(stmt.name, function);
         return null;
     }
@@ -337,7 +371,7 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
         if (environment != null)
             environment.define(name.lexeme , value);
         else
-            globals.put(name.lexeme, value);
+            globals.assign(name, value);
     }
 
 
@@ -347,6 +381,21 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
             execute(stmt.body);
         }
 
+        return null;
+    }
+
+    @Override
+    public Void visitClassStmt(Stmt.Class stmt) {
+        globals.define(stmt.name.lexeme, null);
+
+        Map<String, Function> methods = new HashMap<>();
+        for (Stmt.Function method : stmt.methods) {
+            Function function = new Function(method, environment, method.name.lexeme.equals("init"));
+            methods.put(method.name.lexeme, function);
+        }
+
+        Class klass = new Class(stmt.name.lexeme, methods);
+        globals.assign(stmt.name, klass);
         return null;
     }
 }
