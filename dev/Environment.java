@@ -9,7 +9,6 @@ public class Environment {
     Environment() {
         enclosing = null;
     }
-
     Environment(Environment enclosing) {
         this.enclosing = enclosing;
     }
@@ -19,12 +18,12 @@ public class Environment {
     }
 
     // HELPER: Returns variables according to scope using enclosing and maps
-    Object get(Token name, Environment environment) {
-        if (environment.values.containsKey(name.lexeme))
-            return environment.values.get(name.lexeme);
+    Object get(Token name) {
+        if (values.containsKey(name.lexeme))
+            return values.get(name.lexeme);
 
         if (enclosing != null)
-            return enclosing.get(name, enclosing);
+            return enclosing.get(name);
 
         throw new RuntimeError(name, "Undefined Error'" + name.lexeme + "'.");
     }

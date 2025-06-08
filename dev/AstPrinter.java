@@ -1,5 +1,7 @@
 package dev;
 
+import dev.Stmt;
+
 class AstPrinter implements Expr.Visitor<String>{
     String print(Expr expr) {
         return expr.accept(this);
@@ -37,6 +39,21 @@ class AstPrinter implements Expr.Visitor<String>{
         return expr.name.lexeme;
     }
 
+    @Override
+    public String visitGetExpr(Expr.Get expr) {
+        return parenthesize2(".", expr.object, expr.name.lexeme);
+    }
+
+    @Override
+    public String visitSetExpr(Expr.Set expr) {
+        return parenthesize2("=", expr.object, expr.name.lexeme, expr.value);
+    }
+
+    @Override
+    public String visitThisExpr(Expr.This expr) {
+        return "this";
+    }
+
     // Call / Handle Literals
     public String visitLiteralExpr(Expr.Literal expr) {
         if(expr.value == null)
@@ -49,7 +66,7 @@ class AstPrinter implements Expr.Visitor<String>{
         return parenthesize(expr.operator.lexeme, expr.left, expr.right);
     }
 
-    // Format the expr and present it parenthesized
+    // HELPER: Format the expr and present it parenthesized
     private String parenthesize(String name, Expr... exprs) {
         StringBuilder builder = new StringBuilder();
 
@@ -60,5 +77,29 @@ class AstPrinter implements Expr.Visitor<String>{
         }
         builder.append(")");
         return builder.toString();
+    }
+
+    // HELPER: // Format the expr and present it parenthesized
+    private String parenthesize2(String name, Object... parts) {
+        StringBuilder builder = new StringBuilder();
+
+        builder.append("(").append(name);
+        transform(builder, parts);
+        builder.append(")");
+
+        return builder.toString();
+    }
+
+    private void transform(StringBuilder builder, Object... parts) {
+        for (Object part : parts) {
+            builder.append(" ");
+            if (part instanceof Expr) {
+                builder.append(((Expr) part).accept(this));
+            } else if (part instanceof Token) {
+                builder.append(((Token) part).lexeme);
+            } else {
+                builder.append(part);
+            }
+        }
     }
 }

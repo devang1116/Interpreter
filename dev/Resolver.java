@@ -8,6 +8,15 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     private final Stack<Map<String, Boolean>> scopes = new Stack<>();
     public static Logger logger = Logger.getLogger("Resolver");
 
+    // Maintained to maintain hold of what funtion type we are in to maintain rules
+    private enum FunctionType {
+            FUNCTION,
+        NONE,
+        METHOD,
+        INITIALIZER
+    }
+    private FunctionType currentFunction = FunctionType.NONE;
+
     Resolver(Interpreter interpreter) {
         this.interpreter = interpreter;
         logger.info("Inside Interpreter.");
@@ -35,12 +44,15 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         declare(stmt.name);
         define(stmt.name);
 
-        resolveFunction(stmt);
+        resolveFunction(stmt, FunctionType.FUNCTION);
         return null;
     }
 
     // HELPER: Should maintain scope resolve parameters and body
-    private void resolveFunction(Stmt.Function function) {
+    private void resolveFunction(Stmt.Function function, FunctionType type) {
+        FunctionType enclosingFunction = currentFunction;
+        currentFunction = type;
+
         beginScope();
         for(Token param: function.parameters) {
             declare(param);
@@ -49,6 +61,8 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
         resolve(function.body);
         endScope();
+
+        currentFunction = enclosingFunction;
     }
 
     // HELPER: Resolve the various blocks of if statement
@@ -70,8 +84,12 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitReturnStmt(Stmt.Return stmt) {
-        if(stmt.value != null)
+        if(stmt.value != null) {
+            if(currentFunction == FunctionType.INITIALIZER) {
+                Dmp.error(stmt.keyword, "Cant return a value from an initializer");
+            }
             resolve(stmt.value);
+        }
 
         return null;
     }
@@ -111,6 +129,24 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     public Void visitWhileStmt(Stmt.While stmt) {
         resolve(stmt.condition);
         resolve(stmt.body);
+        return null;
+    }
+
+    @Override
+    public Void visitClassStmt(Stmt.Class stmt) {
+        declare(stmt.name);
+        beginScope();
+        scopes.peek().put("this", true);
+
+        for (Stmt.Function method : stmt.methods) {
+            FunctionType declaration = FunctionType.METHOD;
+            if (method.name.lexeme.equals("init"))
+                declaration = FunctionType.INITIALIZER;
+            resolveFunction(method, declaration);
+        }
+
+        define(stmt.name);
+        endScope();
         return null;
     }
 
@@ -199,6 +235,25 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         }
 
         resolveLocal(expr, expr.name);
+        return null;
+    }
+
+    @Override
+    public Void visitGetExpr(Expr.Get expr) {
+        resolve(expr.object);
+        return null;
+    }
+
+    @Override
+    public Void visitSetExpr(Expr.Set expr) {
+        resolve(expr.value);
+        resolve(expr.object);
+        return null;
+    }
+
+    @Override
+    public Void visitThisExpr(Expr.This expr) {
+        resolveLocal(expr, expr.keyword);
         return null;
     }
 
